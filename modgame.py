@@ -1,14 +1,28 @@
 import random  # noqa: F401
 
 
+
+def evaluate_round(card1: int, card2: int):
+    """
+    Evaluates the winner between the two cards.
+
+    Returns:
+        1 if card 1 wins, 2 if card 2 wins, 0 if no one won.
+    """
+    if (card1 - card2) % 10 == 1:
+        return 1
+    elif (card2 - card1) % 10 == 1:
+        return 2
+    return 0
+
+
 class ModPlay:
-    def __init__(self, rank: str, suit: str, player_id: int) -> None:
+    def __init__(self, rank: str, player_id: int) -> None:
         self.rank = rank
-        self.suit = suit
         self.player_id = player_id
 
     def __str__(self) -> str:
-        return f"({self.rank}, {self.suit}) played by {self.player_id}"
+        return f"({self.rank}) played by {self.player_id}"
 
 
 class ModPlayer:
@@ -26,8 +40,7 @@ class ModPlayer:
     
 
 class ModController:
-    SUITS = ["♠", "♣", "♥", "♦"]    #noqa
-    RANKS = ["J", "Q", "K", "A", "7", "8", "9", "10"] #noqa
+    RANKS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"] #noqa
     RANK_STRENGTH = {rank: i for i, rank in enumerate(RANKS)} #noqa
 
     def __init__(self):
