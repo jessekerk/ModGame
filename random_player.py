@@ -1,15 +1,14 @@
-from modgame import ModPlayer #noqa
-from typing import List
+"""A random baseline agent for the Mod game."""
+import random
+
+from modgame import ModPlayer
+
 
 class RandomPlayer(ModPlayer):
-    def start_game(self, identifier: int, initial_hand: List[int]):
-        super().start_game(self, identifier, initial_hand)
+    def __init__(self, name: str = "Random Player") -> None:
+        super().__init__(name)
 
-    def take_turn(self):
-        import random
+    def take_turn(self) -> int:
         card = random.choice(self.hand)
         self.hand.remove(card)
         return card
-    
-    def observe_play(self, identifier: int, player_count: int, card: str):
-        pass

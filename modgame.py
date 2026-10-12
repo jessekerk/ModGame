@@ -1,177 +1,130 @@
-import random  # noqa: F401
-from typing import List
+"""Two-player Mod game engine.
 
+Each player receives the numbers 1..m, plus three distinct duplicated numbers.
+A game consists of m + 3 simultaneous-play rounds. A card wins a round if
+it is exactly one higher than the opponent's card modulo m. The player with
+more winning rounds wins the game.
+"""
 
-
-def evaluate_round(card1: int, card2: int):
-    """
-    Evaluates the winner between the two cards.
-
-    Returns:
-        1 if card 1 wins, 2 if card 2 wins, 0 if no one won.
-    """
-    if (card1 - card2) % 10 == 1:
-        return 1
-    elif (card2 - card1) % 10 == 1:
-        return 2
-    return 0
-
-def generate_hand():
-    """Generates a 13-card hand: 1-10 plus 3 randomly duplicated cards."""
-    base_cards = list(range(1, 11))
-    duplicates = random.sample(base_cards, 3)
-    hand = base_cards + duplicates
-    random.shuffle(hand)
-    return hand
-
-class ModPlay:
-    def __init__(self, rank: str, player_id: int) -> None:
-        self.rank = rank
-        self.player_id = player_id
-
-    def __str__(self) -> str:
-        return f"card ({self.rank}) played by player {self.player_id}"
+import random
+from collections.abc import Sequence
 
 
 class ModPlayer:
-    """
-    Class that should be inherited from for each unique Player.
-    Every player currently starts with 1 card of each number.
-    """   
+    """Base interface for agents playing the Mod game."""
 
     def __init__(self, name: str = "Player") -> None:
         self.name = name
         self.identifier = -1
-        self.hand = []
+        self.hand: list[int] = []
 
-    def start_game(self, identifier: int, player_count: int, initial_hand: List[int]):
+    def start_game(self, identifier: int, initial_hand: Sequence[int]) -> None:
+        """Reset state at the start of every game."""
         self.identifier = identifier
-        self.player_count = player_count
-        self.hand = initial_hand.copy()
+        self.hand = list(initial_hand)
 
-    def take_turn(self, identifier: int, player_count: int):
+    def take_turn(self) -> int:
+        """Choose a card from self.hand and remove it; override in subclasses."""
+        raise NotImplementedError
+
+    def observe_play(self, own_card: int, opponent_card: int, outcome: int) -> None:
+        """Observe the round, with outcome 1 = win, 2 = loss, 0 = tie."""
         pass
-    
-    def observe_play(self, identifier: int, player_count: int, cards: str):
-        pass
+
 
 class ModController:
-    RANKS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] #noqa
-    RANK_STRENGTH = {rank: i for i, rank in enumerate(RANKS)} #noqa
+    def __init__(self, m: int = 10) -> None:
+        if m < 3:
+            raise ValueError("m must be at least 3 to draw three distinct duplicates")
+        self._players = []
+        self.m = m
+        self.rounds_per_game = m + 3
 
-    def __init__(self, player1: ModPlayer, player2: ModPlayer) -> None:
-        self.players = [player1, player2]
+    def join(self, player):
+        if player not in self._players:
+            self._players.append(player)
+    
+    def _generate_hand(self) -> list[int]:
+        """Return one of each number in 1..m, plus three distinct duplicates."""
+        cards = list(range(1, self.m + 1))
+        cards.extend(random.sample(cards, 3))
+        random.shuffle(cards)
+        return cards
 
-    def play_game(self):
-        identity = 1
-        evaluation = 0
-        for player in self._players:
-            player.start_game(identity, len(self._players))
-            identity += 1
+    def _evaluate_round(self, card1: int, card2: int) -> int:
+        """Return 1 if player 1 wins, 2 if player 2 wins, otherwise 0."""
+        if (card1 - card2) % self.m == 1:
+            return 1
+        if (card2 - card1) % self.m == 1:
+            return 2
+        return 0
 
-        cards_played = {
-                    player.identifier: [] for player in self._players
-                }
-        while evaluation == 0 and len(self._players[0].hand) > 0:
-            for player in self._players:
-                card = player.take_turn(player.identifier, len(self._players))
-                play = ModPlay(card, player.identifier)
-                print(play)
-                cards_played[player.identifier].append(play)
-            for player in self._players:
-                cards = [cards_played[p.identifier][-1] for p in self._players]
-                player.observe_play(player.identifier, len(self._players), cards)
-            card1 = int(cards_played[self._players[0].identifier][-1].rank)
-            card2 = int(cards_played[self._players[1].identifier][-1].rank)
-            evaluation = evaluate_round(card1, card2)
-            print(f"Round evaluation: {evaluation}")
-        if evaluation == 1:
-            print(f"Player {self._players[0].identifier} wins!")
-            return evaluation
-        elif evaluation == 2:
-            print(f"Player {self._players[1].identifier} wins!")
-            return evaluation
-        else:
-            print("It's a tie!")
-            return evaluation
+    def _take_card(self, player: ModPlayer, remaining: list[int]) -> int:
+        """Validate a player's selection against the controller's hand."""
+        card = player.take_turn()
+        if card not in remaining:
+            raise ValueError(f"{player.name} played an unavailable card: {card!r}")
+        remaining.remove(card)
+        return card
 
-    def play_game_2(self, verbose: bool = False):
-        """Executes a full 13-round game.
+    def play(self, *, debug: bool = False) -> tuple[int, dict[int, int]]:
+        """Play one game; return (winner, round scores).
 
-        Returns:
-            Tuple of (overall_winner, final_scores) where overall_winner is
-            1, 2, or 0 (tie).
+        Player IDs are 1 and 2. Winner 0 means the game ended in a tie.
         """
-        # Assign unique random 13-card hands
-        p1_hand = generate_hand()
-        p2_hand = generate_hand()
-        self.players[0].start_game(1, p1_hand)
-        self.players[1].start_game(2, p2_hand)
+        hands = [self._generate_hand(), self._generate_hand()]
+        for identifier, (player, hand) in enumerate(zip(self._players, hands), start=1):
+            player.start_game(identifier, hand)
 
+        # These copies are authoritative: players cannot bypass card validation
+        # by forgetting to remove a card from their own hand.
+        remaining = [hand.copy() for hand in hands]
         scores = {1: 0, 2: 0}
 
-        for round_nr in range(1, 14):
-            card1 = self.players[0].take_turn()
-            card2 = self.players[1].take_turn()
+        for round_number in range(1, self.rounds_per_game + 1):
+            card1 = self._take_card(self._players[0], remaining[0])
+            card2 = self._take_card(self._players[1], remaining[1])
+            outcome = self._evaluate_round(card1, card2)
+            if outcome:
+                scores[outcome] += 1
 
-            outcome = evaluate_round(card1, card2)
-            if outcome == 1:
-                scores[1] += 1
-            elif outcome == 2:
-                scores[2] += 1
+            self._players[0].observe_play(card1, card2, outcome)
+            # Convert outcomes to the second player's perspective.
+            other_outcome = 3 - outcome if outcome else 0
+            self._players[1].observe_play(card2, card1, other_outcome)
 
-            self.players[0].observe_play(card1, card2, outcome)
-            self.players[1].observe_play(card2, card1, outcome)
+            if debug:
+                print(f"Round {round_number}: P1={card1}, P2={card2}, winner={outcome}")
 
-            if verbose:
-                print(f"Round {round_nr}: P1 played {card1}, P2 played {card2} -> Winner: {outcome}")
-
-        if scores[1] > scores[2]:
-            winner = 1
-        elif scores[2] > scores[1]:
-            winner = 2
-        else:
-            winner = 0
-
+        winner = 1 if scores[1] > scores[2] else 2 if scores[2] > scores[1] else 0
+        if debug:
+            print(f"Final scores: {scores}; game winner: {winner}")
         return winner, scores
 
+    def repeated_games(self, number_of_games: int, *, debug: bool = False) -> dict:
+        """Run multiple games and return win counts and average round scores."""
+        if number_of_games <= 0:
+            raise ValueError("number_of_games must be positive")
 
-def repeated_games(n: int, players: list):
-    """
-    Plays n games between two players and prints the results.
-    """
-    controller = ModController()
-    results = []
-    for player in players:
-        controller.join(player)
-    for i in range(n):
-        print(f"Game {i + 1}:")
-        result = controller.play_game()
-        results.append(result)
-        print("\n")
-    counts = {1: results.count(1), 2: results.count(2), 0: results.count(0)}
-    print(f"Player 1 wins: {counts[1]}")
-    print(f"Player 2 wins: {counts[2]}")
-    print(f"Ties: {counts[0]}")
+        wins = {0: 0, 1: 0, 2: 0}
+        total_round_scores = {1: 0, 2: 0}
+
+        for game_number in range(1, number_of_games + 1):
+            if debug:
+                print(f"\n--- Game {game_number} ---")
+            winner, scores = self.play(debug=debug)
+            wins[winner] += 1
+            for player_id in (1, 2):
+                total_round_scores[player_id] += scores[player_id]
+
+        return {
+            "games": number_of_games,
+            "wins": wins,
+            "win_rates": {pid: count / number_of_games for pid, count in wins.items()},
+            "average_round_scores": {
+                pid: total / number_of_games
+                for pid, total in total_round_scores.items()
+            },
+        }
 
 
-
-def repeated_games_2(n: int, player1: ModPlayer, player2: ModPlayer, verbose: bool = False) -> None:
-    """
-    Plays n games between two players and prints the results.
-    """
-    controller = ModController(player1, player2)
-    win_counts = {1: 0, 2: 0, 0: 0}
-    total_scores = {1: 0, 2: 0}
-
-    for _ in range(n):
-        winner, scores = controller.play_game_2(verbose=verbose)
-        win_counts[winner] += 1
-        total_scores[1] += scores[1]
-        total_scores[2] += scores[2]
-
-    print(f"--- Results after {n} games ---")
-    print(f"{player1.name} (P1) Wins: {win_counts[1]} ({win_counts[1] / n * 100:.1f}%)")
-    print(f"{player2.name} (P2) Wins: {win_counts[2]} ({win_counts[2] / n * 100:.1f}%)")
-    print(f"Ties: {win_counts[0]} ({win_counts[0] / n * 100:.1f}%)")
-    print(f"Average Round Score: P1 = {total_scores[1] / n:.2f} | P2 = {total_scores[2] / n:.2f}")
