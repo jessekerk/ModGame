@@ -1,6 +1,4 @@
-import random  # noqa: F401
-from typing import List
-
+import random
 
 
 def evaluate_round(card1: int, card2: int):
@@ -49,18 +47,19 @@ class ModPlayer:
         self.player_count = player_count
         self.hand = initial_hand.copy()
 
-    def take_turn(self, identifier: int, player_count: int):
+    def take_turn(self, identifier: int, player_count: int) -> int: # type: ignore
         pass
     
     def observe_play(self, identifier: int, player_count: int, cards: str):
         pass
 
 class ModController:
-    RANKS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] #noqa
-    RANK_STRENGTH = {rank: i for i, rank in enumerate(RANKS)} #noqa
-
-    def __init__(self, player1: ModPlayer, player2: ModPlayer) -> None:
+    def __init__(self, player1: ModPlayer, player2: ModPlayer, m: int = 10) -> None:
         self.players = [player1, player2]
+
+        self.m = m
+        self.RANKS = list(range(1, m + 1))
+        self.RANK_STRENGTH = {rank: i for i, rank in enumerate(self.RANKS)}
 
     def play_game(self):
         identity = 1
