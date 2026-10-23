@@ -33,23 +33,23 @@ class ModPlayer:
 
 
 class ModController:
-    def __init__(self, m: int = 10) -> None:
-        if m < 3:
-            raise ValueError("m must be at least 3 to draw three distinct duplicates")
-        self._players = []
+    def __init__(self, m=10, extra_cards=0):
         self.m = m
-        self.rounds_per_game = m + 3
+        self.extra_cards = extra_cards
+        self.rounds_per_game = m + extra_cards
+        self._players = []
 
     def join(self, player):
         if player not in self._players:
             self._players.append(player)
     
     def _generate_hand(self) -> list[int]:
-        """Return one of each number in 1..m, plus three distinct duplicates."""
+        """Return one of each number in 1..m, plus selected amount of distinct duplicates."""
         cards = list(range(1, self.m + 1))
-        cards.extend(random.sample(cards, 3))
-        random.shuffle(cards)
-        return cards
+        extra = random.sample(cards, self.extra_cards)
+        hand = cards + extra
+        random.shuffle(hand)
+        return hand
 
     def _evaluate_round(self, card1: int, card2: int) -> int:
         """Return 1 if player 1 wins, 2 if player 2 wins, otherwise 0."""

@@ -39,9 +39,10 @@ class ProbabilisticPlayer(ModPlayer):
     their remaining cards.
     """
 
-    def __init__(self, m: int = 10, name: str = "Probabilistic ToM0"):
+    def __init__(self, m: int = 10, extra_cards: int = 0, name: str = "Probabilistic ToM0"):
         super().__init__(name)
         self.m = m
+        self.extra_cards = extra_cards
         self.opponent_history = []
 
     def start_game(self, identifier, initial_hand):
@@ -66,8 +67,8 @@ class ProbabilisticPlayer(ModPlayer):
 
         for card in range(1, self.m + 1):
             # One guaranteed copy, plus the expected
-            # contribution from the three duplicates
-            expected_initial = 1 + 3 / self.m
+            # contribution from the potential duplicates
+            expected_initial = 1 + self.extra_cards / self.m
 
             estimates[card] = max(0, expected_initial - played[card])
 

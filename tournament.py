@@ -1,22 +1,25 @@
 import itertools
 from collections import defaultdict
-from modgame import ModController, ModPlayer
+from modgame import ModController
 from random_player import RandomPlayer
+from zero_order_player import ProbabilisticPlayer, DuplicateFirstPlayer
 
 
 
 class TournamentBenchmark:
     """Manages tournaments and metrics"""
 
-    def __init__(self, agents, games_per_matchup = 100):
+    def __init__(self, agents, games_per_matchup=100, m=10, extra_cards=0):
         self.agents = agents
         self.games_per_matchup = games_per_matchup
+        self.m = m
+        self.extra_cards = extra_cards
         self.results = []
 
     def _play_single_match(self, p1, p2):
         """Runs a single match"""
 
-        controller = ModController()
+        controller = ModController(m=self.m, extra_cards=self.extra_cards)
         controller.join(p1)
         controller.join(p2)
 
@@ -98,13 +101,21 @@ class TournamentBenchmark:
 
 
 if __name__ == "__main__":
-    # Example test run
+
+    EXTRA_CARDS = 0
+
     agent_list = [
-        RandomPlayer(name="Random_A"),
-        RandomPlayer(name="Random_B"),
-        RandomPlayer(name="Random_C"),
+        RandomPlayer(name="Random"),
+        DuplicateFirstPlayer(name="DuplicateFirst"),
+        ProbabilisticPlayer(name="Probabilistic", extra_cards=EXTRA_CARDS),
     ]
 
-    benchmark = TournamentBenchmark(agents=agent_list, games_per_matchup=100)
+    benchmark = TournamentBenchmark(
+        agents=agent_list,
+        games_per_matchup=10000,
+        m=10,
+        extra_cards=EXTRA_CARDS
+    )
+
     benchmark.run()
     benchmark.print_summary()
