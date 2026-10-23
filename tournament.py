@@ -3,6 +3,7 @@ from collections import defaultdict
 from modgame import ModController
 from random_player import RandomPlayer
 from zero_order_player import ProbabilisticPlayer, DuplicateFirstPlayer
+from first_order_player import FirstOrderPlayer
 
 
 
@@ -108,6 +109,7 @@ if __name__ == "__main__":
         RandomPlayer(name="Random"),
         DuplicateFirstPlayer(name="DuplicateFirst"),
         ProbabilisticPlayer(name="Probabilistic", extra_cards=EXTRA_CARDS),
+        FirstOrderPlayer(m=10, extra_cards=EXTRA_CARDS),
     ]
 
     benchmark = TournamentBenchmark(
