@@ -109,14 +109,13 @@ class SecondOrderPlayer(ModPlayer):
 
         return action_probabilities
 
-    def _predict_tom1_action(self, tom1_hand, tom1_own_history, tom1_opponent_history):
+    def _predict_tom1_action(self, tom1_hand, tom0_actions):
         """
         Simulate one possible FirstOrderPlayer.
 
         Its own history contains cards played by ToM1;
         its opponent history contains cards played by ToM2.
         """
-        tom0_actions = self._predict_tom0_actions(tom1_own_history, tom1_opponent_history)
 
         best_cards = []
         best_probability = -1
@@ -127,19 +126,16 @@ class SecondOrderPlayer(ModPlayer):
 
             probability = sum(
                 opponent_probability
-                for opponent_card, opponent_probability
-                in tom0_actions.items()
+                for opponent_card, opponent_probability in tom0_actions.items()
                 if (card - opponent_card) % self.m == 1
             )
 
             if probability > best_probability:
                 best_probability = probability
                 best_cards = [card]
-
             elif probability == best_probability:
                 best_cards.append(card)
 
-        # FirstOrderPlayer randomly breaks ties.
         action_probabilities = Counter()
 
         if best_cards:
@@ -155,22 +151,23 @@ class SecondOrderPlayer(ModPlayer):
         """
         possible_tom1_hands = self._possible_hands(self.opponent_history)
 
+        # Calculate this only once, not once for every possible hand.
+        tom0_actions = self._predict_tom0_actions(
+            tom1_own_history=self.opponent_history,
+            tom1_opponent_history=self.own_history,
+        )
+
         action_probabilities = Counter()
         number_of_hands = len(possible_tom1_hands)
 
         for tom1_hand in possible_tom1_hands:
             tom1_actions = self._predict_tom1_action(
                 tom1_hand=tom1_hand,
-                # ToM1's own cards played are the cards
-                # ToM2 observed ToM1 play.
-                tom1_own_history=self.opponent_history,
-                # ToM1's opponent history is ToM2's
-                # previously played cards.
-                tom1_opponent_history=self.own_history,
+                tom0_actions=tom0_actions,
             )
 
             for card, probability in tom1_actions.items():
-                action_probabilities[card] += (probability / number_of_hands)
+                action_probabilities[card] += probability / number_of_hands
 
         return action_probabilities
 
