@@ -4,6 +4,7 @@ from modgame import ModController
 from random_player import RandomPlayer
 from zero_order_player import ProbabilisticPlayer, DuplicateFirstPlayer
 from first_order_player import FirstOrderPlayer
+from second_order_player import SecondOrderPlayer
 
 
 
@@ -110,11 +111,12 @@ if __name__ == "__main__":
         DuplicateFirstPlayer(name="DuplicateFirst"),
         ProbabilisticPlayer(name="Probabilistic", extra_cards=EXTRA_CARDS),
         FirstOrderPlayer(m=10, extra_cards=EXTRA_CARDS),
+        SecondOrderPlayer(m=10, extra_cards=EXTRA_CARDS)
     ]
 
     benchmark = TournamentBenchmark(
         agents=agent_list,
-        games_per_matchup=10000,
+        games_per_matchup=1000,
         m=10,
         extra_cards=EXTRA_CARDS
     )
