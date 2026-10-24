@@ -9,7 +9,8 @@ from random_player import RandomPlayer
 from zero_order_player import ProbabilisticPlayer, DuplicateFirstPlayer
 from first_order_player import FirstOrderPlayer
 from second_order_player import SecondOrderPlayer
-
+from ToM1_MonteCarlo import FirstOrderMonteCarloPlayer
+from ToM2_MonteCarlo import SecondOrderMonteCarloPlayer
 
 
 class TournamentBenchmark:
@@ -302,16 +303,24 @@ class TournamentBenchmark:
 
 if __name__ == "__main__":
 
-    EXTRA_CARDS = 0
+    EXTRA_CARDS = 3
     M = 10
-    GAMES_PER_MATCHUP = 10000
+    GAMES_PER_MATCHUP = 1000
 
     agent_list = [
         RandomPlayer(name="Random"),
         DuplicateFirstPlayer(name="DuplicateFirst"),
         ProbabilisticPlayer(name="Probabilistic", m=M, extra_cards=EXTRA_CARDS),
         FirstOrderPlayer(m=M, extra_cards=EXTRA_CARDS),
-        SecondOrderPlayer(m=M, extra_cards=EXTRA_CARDS)
+        SecondOrderPlayer(m=M, extra_cards=EXTRA_CARDS),
+        FirstOrderMonteCarloPlayer(
+            m=M, extra_cards=EXTRA_CARDS, samples=100,
+            name="ToM1 Monte Carlo"
+        ),
+        SecondOrderMonteCarloPlayer(
+            m=M, extra_cards=EXTRA_CARDS, samples=100,
+            name="ToM2 Monte Carlo"
+        )
     ]
 
     benchmark = TournamentBenchmark(
