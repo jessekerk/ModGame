@@ -38,14 +38,32 @@ class FirstOrderPlayer(ModPlayer):
     def _estimate_my_remaining_cards(self):
         """
         Estimate the cards that the opponent believes
-        I still have, using the same model as ToM0.
+        I still have, using the updated ToM0 model.
+
+        Enumerate compatible duplicate configurations
+        based on my publicly observed previous plays.
         """
         played = Counter(self.own_history)
-        estimates = {}
+        possible_hands = []
 
-        for card in range(1, self.m + 1):
-            expected_initial = 1 + self.extra_cards / self.m
-            estimates[card] = max(0, expected_initial - played[card])
+        for duplicates in combinations(range(1, self.m + 1), self.extra_cards):
+            duplicate_set = set(duplicates)
+            remaining = {}
+
+            for card in range(1, self.m + 1):
+                initial = 1 + (card in duplicate_set)
+                remaining[card] = initial - played[card]
+
+            if all(count >= 0 for count in remaining.values()):
+                possible_hands.append(remaining)
+
+        if not possible_hands:
+            raise ValueError("No possible hand matches my observed plays.")
+
+        estimates = {
+            card: sum(hand[card] for hand in possible_hands) / len(possible_hands)
+            for card in range(1, self.m + 1)
+        }
 
         return estimates
 
@@ -91,7 +109,7 @@ class FirstOrderPlayer(ModPlayer):
         Predict the opponent's card distribution.
 
         For each possible opponent hand, simulate the
-        decision rule used by ProbabilisticPlayer.
+        decision rule used by the updated ProbabilisticPlayer.
         """
         estimates = self._estimate_my_remaining_cards()
         total = sum(estimates.values())
@@ -110,22 +128,20 @@ class FirstOrderPlayer(ModPlayer):
             for card in available_cards:
                 target = (card - 2) % self.m + 1
 
-                probability = (estimates[target] / total if total > 0 else 0)
+                probability = estimates[target] / total if total > 0 else 0
 
                 card_scores[card] = probability
 
             best_score = max(card_scores.values())
 
             best_cards = [
-                card
-                for card, score in card_scores.items()
-                if score == best_score
+                card for card, score in card_scores.items() if score == best_score
             ]
 
             # ProbabilisticPlayer randomly chooses among
             # cards with the same best score.
             for card in best_cards:
-                action_probabilities[card] += (1 / len(possible_hands) / len(best_cards))
+                action_probabilities[card] += 1 / len(possible_hands) / len(best_cards)
 
         return action_probabilities
 
@@ -142,8 +158,7 @@ class FirstOrderPlayer(ModPlayer):
         for card in set(self.hand):
             probability = sum(
                 opponent_probability
-                for opponent_card, opponent_probability
-                in opponent_actions.items()
+                for opponent_card, opponent_probability in opponent_actions.items()
                 if (card - opponent_card) % self.m == 1
             )
 
