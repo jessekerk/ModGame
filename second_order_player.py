@@ -15,7 +15,9 @@ class SecondOrderPlayer(ModPlayer):
     predicted probability of winning the current round.
     """
 
-    def __init__(self, m: int = 10, extra_cards: int = 0, name: str = "SecondOrderPlayer"):
+    def __init__(
+        self, m: int = 10, extra_cards: int = 0, name: str = "SecondOrderPlayer"
+    ):
         super().__init__(name)
         self.m = m
         self.extra_cards = extra_cards
@@ -33,16 +35,35 @@ class SecondOrderPlayer(ModPlayer):
 
     def _estimate_remaining_cards(self, played_history):
         """
-        Expected remaining card frequencies under ToM0's
-        model: one copy of each card plus the expected
-        contribution from extra cards.
+        Reproduce the updated ToM0 estimation method.
+
+        Enumerate compatible duplicate configurations and
+        average the remaining card counts.
+
+        Used when simulating ToM1's beliefs about the cards
+        its opponent may still have.
         """
         played = Counter(played_history)
-        estimates = {}
+        possible_hands = []
 
-        for card in range(1, self.m + 1):
-            expected_initial = 1 + self.extra_cards / self.m
-            estimates[card] = max(0, expected_initial - played[card])
+        for duplicates in combinations(range(1, self.m + 1), self.extra_cards):
+            duplicate_set = set(duplicates)
+            remaining = {}
+
+            for card in range(1, self.m + 1):
+                initial = 1 + (card in duplicate_set)
+                remaining[card] = initial - played[card]
+
+            if all(count >= 0 for count in remaining.values()):
+                possible_hands.append(remaining)
+
+        if not possible_hands:
+            raise ValueError("No possible hand matches the observed plays.")
+
+        estimates = {
+            card: sum(hand[card] for hand in possible_hands) / len(possible_hands)
+            for card in range(1, self.m + 1)
+        }
 
         return estimates
 
@@ -79,7 +100,7 @@ class SecondOrderPlayer(ModPlayer):
     def _predict_tom0_actions(self, tom1_own_history, tom1_opponent_history):
         """
         Reproduce the opponent-action prediction used
-        by the existing FirstOrderPlayer.
+        by the updated FirstOrderPlayer.
         """
         estimates = self._estimate_remaining_cards(tom1_own_history)
         total = sum(estimates.values())
@@ -99,13 +120,16 @@ class SecondOrderPlayer(ModPlayer):
             for card in available_cards:
                 target = (card - 2) % self.m + 1
 
-                card_scores[card] = (estimates[target] / total if total > 0 else 0)
+                card_scores[card] = estimates[target] / total if total > 0 else 0
 
             best_score = max(card_scores.values())
-            best_cards = [card for card, score in card_scores.items() if score == best_score]
+
+            best_cards = [
+                card for card, score in card_scores.items() if score == best_score
+            ]
 
             for card in best_cards:
-                action_probabilities[card] += (1 / len(possible_hands) / len(best_cards))
+                action_probabilities[card] += 1 / len(possible_hands) / len(best_cards)
 
         return action_probabilities
 
@@ -116,7 +140,6 @@ class SecondOrderPlayer(ModPlayer):
         Its own history contains cards played by ToM1;
         its opponent history contains cards played by ToM2.
         """
-
         best_cards = []
         best_probability = -1
 
@@ -133,6 +156,7 @@ class SecondOrderPlayer(ModPlayer):
             if probability > best_probability:
                 best_probability = probability
                 best_cards = [card]
+
             elif probability == best_probability:
                 best_cards.append(card)
 
@@ -151,7 +175,7 @@ class SecondOrderPlayer(ModPlayer):
         """
         possible_tom1_hands = self._possible_hands(self.opponent_history)
 
-        # Calculate this only once, not once for every possible hand.
+        # Calculate once, not for every possible ToM1 hand.
         tom0_actions = self._predict_tom0_actions(
             tom1_own_history=self.opponent_history,
             tom1_opponent_history=self.own_history,
@@ -184,8 +208,7 @@ class SecondOrderPlayer(ModPlayer):
         for card in set(self.hand):
             probability = sum(
                 opponent_probability
-                for opponent_card, opponent_probability
-                in opponent_actions.items()
+                for opponent_card, opponent_probability in opponent_actions.items()
                 if (card - opponent_card) % self.m == 1
             )
 

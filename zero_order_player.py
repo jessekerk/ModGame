@@ -1,5 +1,6 @@
 import random
 from collections import Counter
+from itertools import combinations
 
 from modgame import ModPlayer
 
@@ -39,7 +40,9 @@ class ProbabilisticPlayer(ModPlayer):
     their remaining cards.
     """
 
-    def __init__(self, m: int = 10, extra_cards: int = 0, name: str = "Probabilistic ToM0"):
+    def __init__(
+        self, m: int = 10, extra_cards: int = 0, name: str = "Probabilistic ToM0"
+    ):
         super().__init__(name)
         self.m = m
         self.extra_cards = extra_cards
@@ -56,21 +59,33 @@ class ProbabilisticPlayer(ModPlayer):
         """
         Estimate remaining opponent card frequencies.
 
-        Each player initially has one of every card, plus
-        three distinct randomly duplicated cards.
+        Enumerate all possible sets of duplicated cards,
+        eliminate configurations inconsistent with observed
+        plays, and average the remaining card counts.
 
-        The opponent's exact duplicates are unknown.
+        All compatible configurations are weighted equally.
         """
         played = Counter(self.opponent_history)
+        possible_hands = []
 
-        estimates = {}
+        for duplicates in combinations(range(1, self.m + 1), self.extra_cards):
+            duplicate_set = set(duplicates)
+            remaining = {}
 
-        for card in range(1, self.m + 1):
-            # One guaranteed copy, plus the expected
-            # contribution from the potential duplicates
-            expected_initial = 1 + self.extra_cards / self.m
+            for card in range(1, self.m + 1):
+                initial = 1 + (card in duplicate_set)
+                remaining[card] = initial - played[card]
 
-            estimates[card] = max(0, expected_initial - played[card])
+            if all(count >= 0 for count in remaining.values()):
+                possible_hands.append(remaining)
+
+        if not possible_hands:
+            raise ValueError("No possible opponent hand matches the observed plays.")
+
+        estimates = {
+            card: sum(hand[card] for hand in possible_hands) / len(possible_hands)
+            for card in range(1, self.m + 1)
+        }
 
         return estimates
 
