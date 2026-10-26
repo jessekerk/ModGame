@@ -111,4 +111,35 @@
 2026-10-26T14:52:30,ThirdOrderPlayer,ToM1 Monte Carlo,1000,10,3,47.77
 2026-10-26T14:53:32,ThirdOrderPlayer,ToM2 Monte Carlo,1000,10,3,61.503
 2026-10-26T14:54:11,ToM1 Monte Carlo,ToM2 Monte Carlo,1000,10,3,38.621
-
+2026-10-26T15:19:28,Random,ToM3 Monte Carlo,1000,10,0,6.469
+2026-10-26T15:19:34,DuplicateFirst,ToM3 Monte Carlo,1000,10,0,6.316
+2026-10-26T15:19:41,Probabilistic,ToM3 Monte Carlo,1000,10,0,7.318
+2026-10-26T15:19:49,FirstOrderPlayer,ToM3 Monte Carlo,1000,10,0,8.009
+2026-10-26T15:19:57,SecondOrderPlayer,ToM3 Monte Carlo,1000,10,0,8.0
+2026-10-26T15:20:05,ThirdOrderPlayer,ToM3 Monte Carlo,1000,10,0,8.153
+2026-10-26T15:20:16,ToM1 Monte Carlo,ToM3 Monte Carlo,1000,10,0,10.866
+2026-10-26T15:20:32,ToM2 Monte Carlo,ToM3 Monte Carlo,1000,10,0,15.99
+2026-10-26T15:21:00,Random,ToM3 Monte Carlo,1000,10,1,12.502
+2026-10-26T15:21:12,DuplicateFirst,ToM3 Monte Carlo,1000,10,1,11.574
+2026-10-26T15:21:23,Probabilistic,ToM3 Monte Carlo,1000,10,1,11.382
+2026-10-26T15:21:36,FirstOrderPlayer,ToM3 Monte Carlo,1000,10,1,12.778
+2026-10-26T15:21:49,SecondOrderPlayer,ToM3 Monte Carlo,1000,10,1,13.634
+2026-10-26T15:22:04,ThirdOrderPlayer,ToM3 Monte Carlo,1000,10,1,14.88
+2026-10-26T15:22:21,ToM1 Monte Carlo,ToM3 Monte Carlo,1000,10,1,16.246
+2026-10-26T15:22:42,ToM2 Monte Carlo,ToM3 Monte Carlo,1000,10,1,21.503
+2026-10-26T15:23:19,Random,ToM3 Monte Carlo,1000,10,2,18.88
+2026-10-26T15:23:40,DuplicateFirst,ToM3 Monte Carlo,1000,10,2,20.715
+2026-10-26T15:24:01,Probabilistic,ToM3 Monte Carlo,1000,10,2,21.314
+2026-10-26T15:24:26,FirstOrderPlayer,ToM3 Monte Carlo,1000,10,2,24.309
+2026-10-26T15:24:55,SecondOrderPlayer,ToM3 Monte Carlo,1000,10,2,29.365
+2026-10-26T15:25:29,ThirdOrderPlayer,ToM3 Monte Carlo,1000,10,2,33.568
+2026-10-26T15:25:55,ToM1 Monte Carlo,ToM3 Monte Carlo,1000,10,2,26.833
+2026-10-26T15:26:30,ToM2 Monte Carlo,ToM3 Monte Carlo,1000,10,2,34.937
+2026-10-26T15:27:30,Random,ToM3 Monte Carlo,1000,10,3,37.78
+2026-10-26T15:28:07,DuplicateFirst,ToM3 Monte Carlo,1000,10,3,37.058
+2026-10-26T15:28:50,Probabilistic,ToM3 Monte Carlo,1000,10,3,42.712
+2026-10-26T15:29:39,FirstOrderPlayer,ToM3 Monte Carlo,1000,10,3,49.078
+2026-10-26T15:30:40,SecondOrderPlayer,ToM3 Monte Carlo,1000,10,3,61.516
+2026-10-26T15:32:34,ThirdOrderPlayer,ToM3 Monte Carlo,1000,10,3,113.342
+2026-10-26T15:33:26,ToM1 Monte Carlo,ToM3 Monte Carlo,1000,10,3,52.677
+2026-10-26T15:36:54,ToM2 Monte Carlo,ToM3 Monte Carlo,1000,10,3,62.701

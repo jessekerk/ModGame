@@ -359,19 +359,19 @@ if __name__ == "__main__":
 
     agent_list = [
         RandomPlayer(name="Random"),
-        # DuplicateFirstPlayer(name="DuplicateFirst"),
-        # ProbabilisticPlayer(name="Probabilistic", m=M, extra_cards=EXTRA_CARDS),
-        # FirstOrderPlayer(m=M, extra_cards=EXTRA_CARDS),
-        # SecondOrderPlayer(m=M, extra_cards=EXTRA_CARDS),
-        # ThirdOrderPlayer(m=M, extra_cards=EXTRA_CARDS),
-        # FirstOrderMonteCarloPlayer(
-        #     m=M, extra_cards=EXTRA_CARDS, samples=100,
-        #     name="ToM1 Monte Carlo"
-        # ),
-        # SecondOrderMonteCarloPlayer(
-        #     m=M, extra_cards=EXTRA_CARDS, samples=100,
-        #     name="ToM2 Monte Carlo"
-        # ),
+        DuplicateFirstPlayer(name="DuplicateFirst"),
+        ProbabilisticPlayer(name="Probabilistic", m=M, extra_cards=EXTRA_CARDS),
+        FirstOrderPlayer(m=M, extra_cards=EXTRA_CARDS),
+        SecondOrderPlayer(m=M, extra_cards=EXTRA_CARDS),
+        ThirdOrderPlayer(m=M, extra_cards=EXTRA_CARDS),
+        FirstOrderMonteCarloPlayer(
+            m=M, extra_cards=EXTRA_CARDS, samples=100,
+            name="ToM1 Monte Carlo"
+        ),
+        SecondOrderMonteCarloPlayer(
+            m=M, extra_cards=EXTRA_CARDS, samples=100,
+            name="ToM2 Monte Carlo"
+        ),
         ThirdOrderMonteCarloPlayer(
             m=M, extra_cards=EXTRA_CARDS, samples=100,
             name="ToM3 Monte Carlo"
