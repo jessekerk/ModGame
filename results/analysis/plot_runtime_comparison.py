@@ -2,9 +2,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-# Load tournament results
-csv_path = Path("runtime_analysis") / "runtime_results.csv"
-df = pd.read_csv(csv_path)
+# --------------------------------------------------
+# CONFIGURATION
+# --------------------------------------------------
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+CSV_PATH = PROJECT_ROOT / "results" / "full_results.csv"
+OUTPUT_DIR = Path(__file__).resolve().parent
 
 # Selected matchups: Exact vs Exact and MC vs MC
 matchups = {
@@ -31,7 +35,50 @@ matchups = {
     ),
 }
 
-# Select rows, regardless of matchup order
+
+# --------------------------------------------------
+# LOAD RESULTS
+# --------------------------------------------------
+
+df = pd.read_csv(CSV_PATH, encoding="utf-8-sig")
+
+required_columns = [
+    "agent_a",
+    "agent_b",
+    "extra_cards",
+    "runtime_seconds",
+    "games",
+    "m",
+    "samples",
+]
+
+missing = [col for col in required_columns if col not in df.columns]
+
+if missing:
+    raise ValueError(
+        f"Missing columns in full_results.csv: {missing}. "
+        "Make sure tournament.py saves the samples column."
+    )
+
+# Ensure numeric columns are interpreted correctly.
+for col in ["extra_cards", "runtime_seconds", "games", "m", "samples"]:
+    df[col] = pd.to_numeric(df[col], errors="coerce")
+
+df = df.dropna(
+    subset=[
+        "extra_cards",
+        "runtime_seconds",
+        "games",
+        "m",
+        "samples",
+    ]
+)
+
+
+# --------------------------------------------------
+# SELECT MATCHUPS
+# --------------------------------------------------
+
 results = []
 
 for label, (agent_a, agent_b) in matchups.items():
@@ -54,40 +101,55 @@ for label, (agent_a, agent_b) in matchups.items():
     results.append(selected)
 
 if not results:
-    raise ValueError("No matching results found. Check the CSV path and agent names.")
+    raise ValueError(
+        "No matching results found. Check the agent names in full_results.csv."
+    )
 
 plot_df = pd.concat(results, ignore_index=True)
 
-# Average repeated measurements, if present
+
+# --------------------------------------------------
+# GENERATE ONE PLOT PER SAMPLE COUNT
+# --------------------------------------------------
+
 summary = (
-    plot_df.groupby(["matchup", "extra_cards"], as_index=False)
+    plot_df.groupby(["matchup", "extra_cards", "samples"], as_index=False)
     ["runtime_seconds"]
     .mean()
 )
 
-# Plot
-plt.figure(figsize=(10, 6))
+for samples, sample_df in summary.groupby("samples"):
 
-for label, group in summary.groupby("matchup"):
-    group = group.sort_values("extra_cards")
-    plt.plot(
-        group["extra_cards"],
-        group["runtime_seconds"],
-        marker="o",
-        linewidth=2,
-        label=label,
+    plt.figure(figsize=(10, 6))
+
+    for label, group in sample_df.groupby("matchup"):
+        group = group.sort_values("extra_cards")
+
+        plt.plot(
+            group["extra_cards"],
+            group["runtime_seconds"],
+            marker="o",
+            linewidth=2,
+            label=label,
+        )
+
+    plt.xlabel("Number of extra cards")
+    plt.ylabel("Runtime per matchup (seconds)")
+    plt.title(
+        f"Runtime Scaling: Exact ToM vs Monte Carlo\n"
+        f"Samples = {int(samples)}"
     )
 
-plt.xlabel("Number of extra cards")
-plt.ylabel("Runtime for 1,000 games (seconds)")
-plt.title("Runtime scaling: Exact ToM vs Monte Carlo")
-plt.xticks(sorted(summary["extra_cards"].unique()))
-plt.grid(True, alpha=0.3)
-plt.legend()
-plt.tight_layout()
+    plt.xticks(sorted(sample_df["extra_cards"].unique()))
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    plt.tight_layout()
 
-output_path = Path("runtime_analysis/runtime_comparison.png")
-plt.savefig(output_path, dpi=200)
-print(f"Graph saved to: {output_path.resolve()}")
+    output_path = OUTPUT_DIR / f"runtime_comparison_samples_{int(samples)}.png"
 
-plt.show()
+    plt.savefig(output_path, dpi=200)
+    plt.close()
+
+    print(f"Graph saved to: {output_path.resolve()}")
+
+print("\nFinished generating runtime comparison plots.")
