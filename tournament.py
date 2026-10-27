@@ -1,9 +1,7 @@
 import itertools
 import csv
-import math
 import time
 from datetime import datetime
-import matplotlib.pyplot as plt
 from pathlib import Path
 from collections import defaultdict
 from modgame import ModController
@@ -195,40 +193,3 @@ class TournamentBenchmark:
             print(f"{agent_name}: {wins} total wins")
 
 
-if __name__ == "__main__":
-
-    EXTRA_CARDS = 3
-    M = 10
-    GAMES_PER_MATCHUP = 10
-    SAMPLES = 100
-
-    agent_list = [
-        RandomPlayer(),
-        ZeroOrderPlayer(m=M, extra_cards=EXTRA_CARDS),
-        FirstOrderPlayer(m=M, extra_cards=EXTRA_CARDS),
-        SecondOrderPlayer(m=M, extra_cards=EXTRA_CARDS),
-        ThirdOrderPlayer(m=M, extra_cards=EXTRA_CARDS),
-        FirstOrderMonteCarloPlayer(
-            m=M, extra_cards=EXTRA_CARDS, samples=SAMPLES,
-            name="ToM1 Monte Carlo"
-        ),
-        SecondOrderMonteCarloPlayer(
-            m=M, extra_cards=EXTRA_CARDS, samples=SAMPLES,
-            name="ToM2 Monte Carlo"
-        ),
-        ThirdOrderMonteCarloPlayer(
-            m=M, extra_cards=EXTRA_CARDS, samples=SAMPLES,
-            name="ToM3 Monte Carlo"
-        )
-    ]
-
-    benchmark = TournamentBenchmark(
-        agents=agent_list,
-        games_per_matchup=GAMES_PER_MATCHUP,
-        m=M,
-        extra_cards=EXTRA_CARDS,
-        samples=SAMPLES,
-    )
-
-    benchmark.run()
-    benchmark.print_summary()
