@@ -8,7 +8,7 @@ from pathlib import Path
 from collections import defaultdict
 from modgame import ModController
 from random_player import RandomPlayer
-from zero_order_player import ProbabilisticPlayer, DuplicateFirstPlayer
+from zero_order_player import ZeroOrderPlayer
 from first_order_player import FirstOrderPlayer
 from second_order_player import SecondOrderPlayer
 from third_order_player import ThirdOrderPlayer
@@ -87,11 +87,6 @@ class TournamentBenchmark:
 
             # Record the runtime for this complete matchup (both playing sides).
             runtime_seconds = time.perf_counter() - matchup_start
-            self._append_runtime_result(
-                agent_a=agent_a.name,
-                agent_b=agent_b.name,
-                runtime_seconds=runtime_seconds,
-            )
 
             # Calculate metrics
             games = self.games_per_matchup
@@ -109,14 +104,23 @@ class TournamentBenchmark:
                 pairing_stats["b_round_points"] / games if games else 0
             )
 
+            self._append_result(
+                agent_a=agent_a.name,
+                agent_b=agent_b.name,
+                runtime_seconds=runtime_seconds,
+                pairing_stats=pairing_stats,
+            )
+
             self.results.append(pairing_stats)
 
-    def _append_runtime_result(self, agent_a, agent_b, runtime_seconds,
-                               output_dir="runtime_analysis"):
-        """Append one runtime record per matchup without overwriting older runs."""
+    def _append_result(
+        self, agent_a, agent_b, runtime_seconds, pairing_stats,
+        output_dir="runtime_analysis"
+    ):
+        """Append runtime and matchup metrics to one CSV."""
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
-        runtime_file = output_path / "runtime_results.csv"
+        runtime_file = output_path / "full_results.csv"
 
         columns = [
             "timestamp",
@@ -126,6 +130,15 @@ class TournamentBenchmark:
             "m",
             "extra_cards",
             "runtime_seconds",
+            "a_wins",
+            "b_wins",
+            "ties",
+            "a_win_rate",
+            "b_win_rate",
+            "a_round_points",
+            "b_round_points",
+            "a_average_score",
+            "b_average_score",
         ]
 
         write_header = (
@@ -134,6 +147,7 @@ class TournamentBenchmark:
 
         with runtime_file.open("a", newline="", encoding="utf-8-sig") as file:
             writer = csv.DictWriter(file, fieldnames=columns)
+
             if write_header:
                 writer.writeheader()
 
@@ -145,6 +159,11 @@ class TournamentBenchmark:
                 "m": self.m,
                 "extra_cards": self.extra_cards,
                 "runtime_seconds": round(runtime_seconds, 3),
+                **{
+                    key: pairing_stats[key]
+                    for key in columns
+                    if key in pairing_stats
+                },
             })
 
     def print_summary(self) -> None:
@@ -353,27 +372,27 @@ class TournamentBenchmark:
 
 if __name__ == "__main__":
 
-    EXTRA_CARDS = 3
+    EXTRA_CARDS = 0
     M = 10
-    GAMES_PER_MATCHUP = 1000
+    GAMES_PER_MATCHUP = 10
+    SAMPLES = 100
 
     agent_list = [
         RandomPlayer(name="Random"),
-        DuplicateFirstPlayer(name="DuplicateFirst"),
-        ProbabilisticPlayer(name="Probabilistic", m=M, extra_cards=EXTRA_CARDS),
+        ZeroOrderPlayer(name="Probabilistic", m=M, extra_cards=EXTRA_CARDS),
         FirstOrderPlayer(m=M, extra_cards=EXTRA_CARDS),
         SecondOrderPlayer(m=M, extra_cards=EXTRA_CARDS),
         ThirdOrderPlayer(m=M, extra_cards=EXTRA_CARDS),
         FirstOrderMonteCarloPlayer(
-            m=M, extra_cards=EXTRA_CARDS, samples=100,
+            m=M, extra_cards=EXTRA_CARDS, samples=SAMPLES,
             name="ToM1 Monte Carlo"
         ),
         SecondOrderMonteCarloPlayer(
-            m=M, extra_cards=EXTRA_CARDS, samples=100,
+            m=M, extra_cards=EXTRA_CARDS, samples=SAMPLES,
             name="ToM2 Monte Carlo"
         ),
         ThirdOrderMonteCarloPlayer(
-            m=M, extra_cards=EXTRA_CARDS, samples=100,
+            m=M, extra_cards=EXTRA_CARDS, samples=SAMPLES,
             name="ToM3 Monte Carlo"
         )
     ]

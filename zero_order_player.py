@@ -5,33 +5,7 @@ from itertools import combinations
 from modgame import ModPlayer
 
 
-class DuplicateFirstPlayer(ModPlayer):
-    """
-    Zero-order agent that plays duplicate cards first.
-
-    The strategy preserves as many different card values
-    as possible for later rounds.
-    """
-
-    def __init__(self, name: str = "Duplicate First"):
-        super().__init__(name)
-
-    def take_turn(self) -> int:
-        counts = Counter(self.hand)
-
-        # Find cards that appear more than once
-        duplicates = [card for card in self.hand if counts[card] > 1]
-
-        if duplicates:
-            card = random.choice(duplicates)
-        else:
-            card = random.choice(self.hand)
-
-        self.hand.remove(card)
-        return card
-
-
-class ProbabilisticPlayer(ModPlayer):
+class ZeroOrderPlayer(ModPlayer):
     """
     Zero-order agent that maximizes the estimated probability
     of winning the current round.
@@ -40,9 +14,7 @@ class ProbabilisticPlayer(ModPlayer):
     their remaining cards.
     """
 
-    def __init__(
-        self, m: int = 10, extra_cards: int = 0, name: str = "Probabilistic ToM0"
-    ):
+    def __init__(self, m: int = 10, extra_cards: int = 0, name: str = "ZeroOrderPlayer"):
         super().__init__(name)
         self.m = m
         self.extra_cards = extra_cards

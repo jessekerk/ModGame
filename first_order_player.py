@@ -14,12 +14,7 @@ class FirstOrderPlayer(ModPlayer):
     card the opponent is likely to play.
     """
 
-    def __init__(
-        self,
-        m: int = 10,
-        extra_cards: int = 0,
-        name: str = "FirstOrderPlayer",
-    ):
+    def __init__(self, m: int = 10, extra_cards: int = 0, name: str = "FirstOrderPlayer"):
         super().__init__(name)
         self.m = m
         self.extra_cards = extra_cards
