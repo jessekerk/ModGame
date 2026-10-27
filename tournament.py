@@ -193,3 +193,60 @@ class TournamentBenchmark:
             print(f"{agent_name}: {wins} total wins")
 
 
+def create_agents(agent_names, m, extra_cards, samples):
+    agent_classes = {
+        "Random": lambda: RandomPlayer(),
+        "ZeroOrder": lambda: ZeroOrderPlayer(m=m, extra_cards=extra_cards),
+        "FirstOrder": lambda: FirstOrderPlayer(m=m, extra_cards=extra_cards),
+        "SecondOrder": lambda: SecondOrderPlayer(m=m, extra_cards=extra_cards),
+        "ThirdOrder": lambda: ThirdOrderPlayer(m=m, extra_cards=extra_cards),
+        "ToM1 Monte Carlo": lambda: FirstOrderMonteCarloPlayer(m=m, extra_cards=extra_cards, samples=samples),
+        "ToM2 Monte Carlo": lambda: SecondOrderMonteCarloPlayer(m=m, extra_cards=extra_cards, samples=samples),
+        "ToM3 Monte Carlo": lambda: ThirdOrderMonteCarloPlayer(m=m, extra_cards=extra_cards, samples=samples),
+    }
+
+    unknown = set(agent_names) - set(agent_classes)
+    if unknown:
+        raise ValueError(f"Unknown agents: {unknown}")
+
+    return [agent_classes[name]() for name in agent_names]
+
+
+def repeating_tournament(agent_names, extra_cards_list, samples_list, m, games_per_matchup):
+    """
+    If multiple extra cards or samples are selected, run multiple tournaments
+    """
+    if isinstance(extra_cards_list, int):
+        extra_cards_list = [extra_cards_list]
+
+    if isinstance(samples_list, int):
+        samples_list = [samples_list]
+
+    for extra_cards in extra_cards_list:
+        for samples in samples_list:
+            print("\n" + "=" * 60)
+            print(f"Starting tournament: extra_cards={extra_cards}, samples={samples}")
+            print("=" * 60)
+
+            # Create agents for this configuration
+            agent_list = create_agents(
+                agent_names=agent_names,
+                m=m,
+                extra_cards=extra_cards,
+                samples=samples,
+            )
+
+            # Setup tournament
+            benchmark = TournamentBenchmark(
+                agents=agent_list,
+                games_per_matchup=games_per_matchup,
+                m=m,
+                extra_cards=extra_cards,
+                samples=samples,
+            )
+
+            # Run tournament
+            benchmark.run()
+            benchmark.print_summary()
+
+
