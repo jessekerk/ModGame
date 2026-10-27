@@ -47,7 +47,10 @@ class TournamentBenchmark:
 
         half_games = self.games_per_matchup // 2
 
-        for agent_a, agent_b in matchups:
+        total = len(matchups)
+
+        for i, (agent_a, agent_b) in enumerate(matchups, start=1):
+            print(f"Progress: {i}/{total} matchups "f"({i / total:.0%})", end="\r", flush=True)
             matchup_start = time.perf_counter()
 
             pairing_stats = {

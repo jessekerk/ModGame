@@ -3,9 +3,9 @@ from tournament import repeating_tournament
 # CONFIGURATION
 # For EXTRA_CARDS and SAMPLES, you can use a list to make all combinations of tournaments.
 # Integer also still works, so EXTRA_CARDS = 3 or EXTRA_CARDS = [0, 3] both work.
-EXTRA_CARDS = [0, 3]
-SAMPLES = [5, 25, 50, 100]
-M = 10
+EXTRA_CARDS = 4
+SAMPLES = 25
+M = 10 # The amount of standard cards, which in our experiment is always [1, ..., 10]
 GAMES_PER_MATCHUP = 1000
 
 # SELECT AGENTS
