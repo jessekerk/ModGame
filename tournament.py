@@ -7,25 +7,26 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from collections import defaultdict
 from modgame import ModController
-from random_player import RandomPlayer
-from zero_order_player import ZeroOrderPlayer
-from first_order_player import FirstOrderPlayer
-from second_order_player import SecondOrderPlayer
-from third_order_player import ThirdOrderPlayer
-from ToM1_MonteCarlo import FirstOrderMonteCarloPlayer
-from ToM2_MonteCarlo import SecondOrderMonteCarloPlayer
-from ToM3_MonteCarlo import ThirdOrderMonteCarloPlayer
+from agents.random_player import RandomPlayer
+from agents.zero_order_player import ZeroOrderPlayer
+from agents.first_order_player import FirstOrderPlayer
+from agents.second_order_player import SecondOrderPlayer
+from agents.third_order_player import ThirdOrderPlayer
+from agents.ToM1_MonteCarlo import FirstOrderMonteCarloPlayer
+from agents.ToM2_MonteCarlo import SecondOrderMonteCarloPlayer
+from agents.ToM3_MonteCarlo import ThirdOrderMonteCarloPlayer
 
 
 class TournamentBenchmark:
     """Manages tournaments, metrics and CSV exports"""
 
-    def __init__(self, agents, games_per_matchup=100, m=10, extra_cards=0):
+    def __init__(self, agents, games_per_matchup=100, m=10, extra_cards=0, samples=100):
         self.agents = agents
         self.games_per_matchup = games_per_matchup
         self.m = m
         self.extra_cards = extra_cards
         self.results = []
+        self.samples = samples
 
     def _play_single_match(self, p1, p2):
         """Runs a single match"""
@@ -115,7 +116,7 @@ class TournamentBenchmark:
 
     def _append_result(
         self, agent_a, agent_b, runtime_seconds, pairing_stats,
-        output_dir="runtime_analysis"
+        output_dir="results"
     ):
         """Append runtime and matchup metrics to one CSV."""
         output_path = Path(output_dir)
@@ -128,6 +129,7 @@ class TournamentBenchmark:
             "agent_b",
             "games",
             "m",
+            "samples",
             "extra_cards",
             "runtime_seconds",
             "a_wins",
@@ -158,6 +160,7 @@ class TournamentBenchmark:
                 "games": self.games_per_matchup,
                 "m": self.m,
                 "extra_cards": self.extra_cards,
+                "samples": self.samples,
                 "runtime_seconds": round(runtime_seconds, 3),
                 **{
                     key: pairing_stats[key]
@@ -191,195 +194,17 @@ class TournamentBenchmark:
         for agent_name, wins in total_wins.items():
             print(f"{agent_name}: {wins} total wins")
 
-    def export_csv(self, output_dir="tournament_results"):
-        """Exports detailed results and two comparison matrices."""
-        output_path = Path(output_dir)
-        output_path.mkdir(parents=True, exist_ok=True)
-
-        # 1. Detailed matchup results
-        details_file = output_path / "matchup_results.csv"
-
-        columns = [
-            "agent_a",
-            "agent_b",
-            "m",
-            "extra_cards",
-            "games",
-            "a_wins",
-            "b_wins",
-            "ties",
-            "a_win_rate",
-            "b_win_rate",
-            "a_average_score",
-            "b_average_score",
-            "a_round_points",
-            "b_round_points",
-        ]
-
-        with details_file.open("w", newline="", encoding="utf-8-sig") as file:
-            writer = csv.DictWriter(file, fieldnames=columns)
-            writer.writeheader()
-
-            for res in self.results:
-                row = {
-                    **res,
-                    "m": self.m,
-                    "extra_cards": self.extra_cards,
-                    "games": self.games_per_matchup,
-                }
-                writer.writerow({key: row[key] for key in columns})
-
-        # 2. Win-rate matrix
-        agent_names = [agent.name for agent in self.agents]
-        win_matrix = {name: {opponent: "" for opponent in agent_names}
-                      for name in agent_names}
-        score_matrix = {name: {opponent: "" for opponent in agent_names}
-                        for name in agent_names}
-
-        for res in self.results:
-            a = res["agent_a"]
-            b = res["agent_b"]
-
-            # Row = agent, column = opponent
-            win_matrix[a][b] = round(res["a_win_rate"], 2)
-            win_matrix[b][a] = round(res["b_win_rate"], 2)
-
-            score_matrix[a][b] = round(res["a_average_score"], 3)
-            score_matrix[b][a] = round(res["b_average_score"], 3)
-
-        win_file = output_path / "win_rate_matrix.csv"
-        with win_file.open("w", newline="", encoding="utf-8-sig") as file:
-            writer = csv.writer(file)
-            writer.writerow(["Agent vs opponent (%)"] + agent_names)
-
-            for name in agent_names:
-                writer.writerow(
-                    [name] + [win_matrix[name][opponent]
-                              for opponent in agent_names]
-                )
-
-        score_file = output_path / "average_score_matrix.csv"
-        with score_file.open("w", newline="", encoding="utf-8-sig") as file:
-            writer = csv.writer(file)
-            writer.writerow(["Agent vs opponent (points/game)"] + agent_names)
-
-            for name in agent_names:
-                writer.writerow(
-                    [name] + [score_matrix[name][opponent]
-                              for opponent in agent_names]
-                )
-
-        print("\n=== CSV EXPORT ===")
-        print(f"Detailed results: {details_file}")
-        print(f"Win-rate matrix: {win_file}")
-        print(f"Average-score matrix: {score_file}")
-
-
-
-    def export_heatmaps(self, output_dir="tournament_results"):
-        """Exports win-rate and average-score matrices as heatmaps."""
-        output_path = Path(output_dir)
-        output_path.mkdir(parents=True, exist_ok=True)
-
-        agent_names = [agent.name for agent in self.agents]
-
-        metrics = [
-            (
-                "win_rate_matrix",
-                "Win Rate (%)",
-                "win_rate",
-                self.results,
-                0,
-                100,
-            ),
-            (
-                "average_score_matrix",
-                "Average Score per Game",
-                "average_score",
-                self.results,
-                None,
-                None,
-            ),
-        ]
-
-        for filename, title, metric, results, vmin, vmax in metrics:
-            matrix = {
-                name: {opponent: math.nan for opponent in agent_names}
-                for name in agent_names
-            }
-
-            for res in results:
-                a = res["agent_a"]
-                b = res["agent_b"]
-
-                if metric == "win_rate":
-                    matrix[a][b] = res["a_win_rate"]
-                    matrix[b][a] = res["b_win_rate"]
-                else:
-                    matrix[a][b] = res["a_average_score"]
-                    matrix[b][a] = res["b_average_score"]
-
-            values = [
-                [matrix[name][opponent] for opponent in agent_names]
-                for name in agent_names
-            ]
-
-            fig, ax = plt.subplots(
-                figsize=(max(8, len(agent_names) * 1.5),
-                         max(6, len(agent_names) * 1.2))
-            )
-
-            image = ax.imshow(
-                values,
-                cmap="RdYlGn" if metric == "win_rate" else "YlGnBu",
-                vmin=vmin,
-                vmax=vmax,
-            )
-
-            ax.set_xticks(range(len(agent_names)))
-            ax.set_yticks(range(len(agent_names)))
-            ax.set_xticklabels(agent_names, rotation=35, ha="right")
-            ax.set_yticklabels(agent_names)
-
-            ax.set_xlabel("Opponent")
-            ax.set_ylabel("Agent")
-            ax.set_title(title)
-
-            fig.colorbar(image, ax=ax, label=title)
-
-            for i, row in enumerate(values):
-                for j, value in enumerate(row):
-                    if not math.isnan(value):
-                        label = (
-                            f"{value:.1f}%"
-                            if metric == "win_rate"
-                            else f"{value:.2f}"
-                        )
-                        ax.text(
-                            j, i, label,
-                            ha="center",
-                            va="center",
-                            color="black",
-                        )
-
-            fig.tight_layout()
-            file_path = output_path / f"{filename}.png"
-            fig.savefig(file_path, dpi=200, bbox_inches="tight")
-            plt.close(fig)
-
-            print(f"Heatmap saved: {file_path}")
-
 
 if __name__ == "__main__":
 
-    EXTRA_CARDS = 0
+    EXTRA_CARDS = 3
     M = 10
     GAMES_PER_MATCHUP = 10
     SAMPLES = 100
 
     agent_list = [
-        RandomPlayer(name="Random"),
-        ZeroOrderPlayer(name="Probabilistic", m=M, extra_cards=EXTRA_CARDS),
+        RandomPlayer(),
+        ZeroOrderPlayer(m=M, extra_cards=EXTRA_CARDS),
         FirstOrderPlayer(m=M, extra_cards=EXTRA_CARDS),
         SecondOrderPlayer(m=M, extra_cards=EXTRA_CARDS),
         ThirdOrderPlayer(m=M, extra_cards=EXTRA_CARDS),
@@ -401,10 +226,9 @@ if __name__ == "__main__":
         agents=agent_list,
         games_per_matchup=GAMES_PER_MATCHUP,
         m=M,
-        extra_cards=EXTRA_CARDS
+        extra_cards=EXTRA_CARDS,
+        samples=SAMPLES,
     )
 
     benchmark.run()
     benchmark.print_summary()
-    benchmark.export_csv()
-    benchmark.export_heatmaps()
