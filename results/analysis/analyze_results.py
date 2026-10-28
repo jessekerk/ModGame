@@ -259,15 +259,43 @@ def main():
             "FirstOrderPlayer",
             "SecondOrderPlayer",
             "ThirdOrderPlayer",
-            "FirstOrderMonteCarloPlayer",
-            "SecondOrderMonteCarloPlayer",
-            "ThirdOrderMonteCarloPlayer",
+            # "FirstOrderMonteCarloPlayer",
+            # "SecondOrderMonteCarloPlayer",
+            # "ThirdOrderMonteCarloPlayer",
+            "ToM1 MC Optimized",
+            "ToM2 MC Optimized",
+            "ToM3 MC Optimized",
         ]
 
-        # Include only agents present in this experiment.
+        # Include agents present in this experiment, excluding old Monte Carlo agents.
+        excluded_agents = [
+            "ToM1 Monte Carlo",
+            "ToM2 Monte Carlo",
+            "ToM3 Monte Carlo",
+        ]
+
+        # Remove old Monte Carlo agents from the matchup data.
+        grouped = grouped[
+            ~grouped["agent_a"].isin(excluded_agents)
+            & ~grouped["agent_b"].isin(excluded_agents)
+        ].copy()
+
+        # Determine the agents remaining after filtering.
         present_agents = set(grouped["agent_a"]) | set(grouped["agent_b"])
 
-        agents = [agent for agent in preferred_order if agent in present_agents]
+        agents = [
+            agent for agent in preferred_order
+            if agent in present_agents
+        ]
+
+        # Include any other agents not explicitly listed.
+        agents += sorted(present_agents - set(preferred_order))
+
+        # Keep only matchups between the selected agents.
+        grouped = grouped[
+            grouped["agent_a"].isin(agents)
+            & grouped["agent_b"].isin(agents)
+        ].copy()
 
         # Add any other agents not explicitly listed above.
         agents += sorted(present_agents - set(preferred_order))

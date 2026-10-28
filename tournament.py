@@ -13,6 +13,9 @@ from agents.third_order_player import ThirdOrderPlayer
 from agents.ToM1_MonteCarlo import FirstOrderMonteCarloPlayer
 from agents.ToM2_MonteCarlo import SecondOrderMonteCarloPlayer
 from agents.ToM3_MonteCarlo import ThirdOrderMonteCarloPlayer
+from agents.ToM1_MonteCarlo_Optimized import FirstOrderMonteCarloOptimizedPlayer
+from agents.ToM2_MonteCarlo_Optimized import SecondOrderMonteCarloOptimizedPlayer
+from agents.ToM3_MonteCarlo_Optimized import ThirdOrderMonteCarloOptimizedPlayer
 
 
 class TournamentBenchmark:
@@ -206,6 +209,9 @@ def create_agents(agent_names, m, extra_cards, samples):
         "ToM1 Monte Carlo": lambda: FirstOrderMonteCarloPlayer(m=m, extra_cards=extra_cards, samples=samples),
         "ToM2 Monte Carlo": lambda: SecondOrderMonteCarloPlayer(m=m, extra_cards=extra_cards, samples=samples),
         "ToM3 Monte Carlo": lambda: ThirdOrderMonteCarloPlayer(m=m, extra_cards=extra_cards, samples=samples),
+        "ToM1 MC Optimized": lambda: FirstOrderMonteCarloOptimizedPlayer(m=m, extra_cards=extra_cards, samples=samples),
+        "ToM2 MC Optimized": lambda: SecondOrderMonteCarloOptimizedPlayer(m=m, extra_cards=extra_cards, samples=samples),
+        "ToM3 MC Optimized": lambda: ThirdOrderMonteCarloOptimizedPlayer(m=m, extra_cards=extra_cards, samples=samples),
     }
 
     unknown = set(agent_names) - set(agent_classes)

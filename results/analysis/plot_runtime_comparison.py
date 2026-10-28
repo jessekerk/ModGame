@@ -33,6 +33,17 @@ matchups = {
     "MC ToM2 vs ToM3": (
         "ToM2 Monte Carlo", "ToM3 Monte Carlo"
     ),
+
+    # MC Optimized ToM agents
+        "MC Optimized ToM1 vs ToM2": (
+            "ToM1 MC Optimized", "ToM2 MC Optimized"
+        ),
+        "MC Optimized ToM1 vs ToM3": (
+            "ToM1 MC Optimized", "ToM3 MC Optimized"
+        ),
+        "MC Optimized ToM2 vs ToM3": (
+            "ToM2 MC Optimized", "ToM3 MC Optimized"
+        ),
 }
 
 
