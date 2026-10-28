@@ -3,7 +3,7 @@ from tournament import repeating_tournament
 # CONFIGURATION
 # For EXTRA_CARDS and SAMPLES, you can use a list to make all combinations of tournaments.
 # Integer also still works, so EXTRA_CARDS = 3 or EXTRA_CARDS = [0, 3] both work.
-EXTRA_CARDS = 3
+EXTRA_CARDS = 0
 SAMPLES = 25
 M = 10 # The amount of standard cards, which in our experiment is always [1, ..., 10]
 GAMES_PER_MATCHUP = 1000
@@ -15,7 +15,7 @@ AGENTS = [
     "FirstOrder",
     "SecondOrder",
     "ThirdOrder",
-    # "ToM1 Monte Carlo",
+    # "ToM1 Monte Carlo",   # These are the old monte carlo implementations. Currently not being used in plotting.
     # "ToM2 Monte Carlo",
     # "ToM3 Monte Carlo",
     "ToM1 MC Optimized",
